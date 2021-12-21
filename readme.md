@@ -1,3 +1,10 @@
+# Replace Body
+
+**First time using Golang, Do not use this on production environment !**
+
+Request to remote server -> replace origin `req.Body` by remote server response
+
+---
 # Developing a Traefik plugin
 
 [Traefik](https://traefik.io) plugins are developed using the [Go language](https://golang.org).

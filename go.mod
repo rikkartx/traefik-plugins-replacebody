@@ -1,3 +1,3 @@
-module github.com/traefik/plugindemo
+module plugin_replace_body
 
 go 1.16
