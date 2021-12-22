@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"plugin_replace_body"
@@ -15,7 +14,7 @@ import (
 
 func TestReplaceBody(t *testing.T) {
 	cfg := plugin_replace_body.CreateConfig()
-	cfg.Address = "http://localhost:8080"
+	cfg.Address = "https://httpbin.org/robots.txt"
 	cfg.Method = http.MethodGet
 
 	ctx := context.Background()
@@ -28,27 +27,37 @@ func TestReplaceBody(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8080/foo", nil)
+	// this url doesn't matter
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://httpbin.org/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	reader := strings.NewReader("{\"type\": \"a\"}")
-	req.Body = ioutil.NopCloser(reader)
-	req.ContentLength = int64(reader.Len())
+	testReq, err := http.NewRequest(http.MethodGet, cfg.Address, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testClient := http.Client{}
+	testResponse, err := testClient.Do(testReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	_, _ = io.Copy(bufio.NewWriter(&buf), testResponse.Body)
+
 	handler.ServeHTTP(recorder, req)
 
-	assertBody(t, req, "{\"type\": \"b\", \"lastModified\": \"time.Now()\"}")
+	assertBody(t, req, buf.String())
 }
 
-func assertBody(t *testing.T, req *http.Request, body string) {
+func assertBody(t *testing.T, req *http.Request, matchBody string) {
 	t.Helper()
 
 	var buf bytes.Buffer
 	_, _ = io.Copy(bufio.NewWriter(&buf), req.Body)
 
 	bodyString := buf.String()
-	if !strings.EqualFold(bodyString, body) {
-		t.Errorf("not equal: %s, %s", bodyString, body)
+	if !strings.EqualFold(bodyString, matchBody) {
+		t.Errorf("not equal: %s, %s", bodyString, matchBody)
 	}
 }
