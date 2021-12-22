@@ -14,8 +14,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
+
+// hopHeaders Hop-by-hop headers to be removed in the authentication request.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+// Proxy-Authorization header is forwarded to the authentication server (see https://tools.ietf.org/html/rfc7235#section-4.4).
+var hopHeaders = map[string]interface{}{
+	"connection":        true,
+	"keep-alive":        true,
+	"te":                true, // canonicalized version of "TE"
+	"trailers":          true,
+	"transfer-encoding": true,
+	"upgrade":           true,
+}
 
 // ClientTLS copy from traefik/pkg/types/tls.go
 type ClientTLS struct {
@@ -228,6 +241,9 @@ func writeErrorToResponse(rw http.ResponseWriter, errMessage string) {
 func copyHeaders(src http.Header, dest http.Header, del bool) {
 	// copy from https://github.com/vulcand/oxy/blob/master/utils/netutils.go
 	for k, vv := range src {
+		if hopHeaders[strings.ToLower(k)] != nil {
+			continue
+		}
 		if del {
 			dest.Del(k)
 		}
