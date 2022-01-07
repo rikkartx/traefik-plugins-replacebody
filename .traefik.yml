@@ -1,11 +1,10 @@
-displayName: Demo Plugin
+displayName: ReplaceBody Plugin
 type: middleware
 
-import: github.com/traefik/plugindemo
+import: github.com/rikkartx/replacebody
 
-summary: '[Demo] Add Request Header'
+summary: '[ReplaceBody] Replace Original Request By Response From Specified Address'
 
 testData:
-  Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
+  Address: https://httpbin.org/robots.txt
+  Method: GET
